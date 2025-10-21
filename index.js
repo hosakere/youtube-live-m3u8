@@ -1,14 +1,14 @@
 import express from "express";
 import fetch from "node-fetch";
-import pkg from "yt-dlp-wrap";
-const { YtDlpWrap } = pkg;
+import YtDlpWrap from "yt-dlp-wrap";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// create yt-dlp instance
-const ytDlp = new YtDlpWrap();
+// Initialize yt-dlp
+const ytDlp = new YtDlpWrap.default();
 
+// Live m3u8 route
 app.get("/live.m3u8", async (req, res) => {
   const youtubeUrl = req.query.url;
   if (!youtubeUrl) {
@@ -16,22 +16,19 @@ app.get("/live.m3u8", async (req, res) => {
   }
 
   try {
-    const streamUrl = await ytDlp.execPromise([
-      "-g",
-      "-f",
-      "best",
-      youtubeUrl,
-    ]);
+    const streamUrl = await ytDlp.execPromise(["-g", "-f", "best", youtubeUrl]);
     res.redirect(streamUrl.trim());
   } catch (err) {
+    console.error("Error:", err);
     res.status(500).send("Error fetching stream: " + err.message);
   }
 });
 
+// Simple health check
 app.get("/", (req, res) => {
-  res.send("✅ YouTube M3U8 server is running!");
+  res.send("✅ YouTube Live M3U8 Server running on Render!");
 });
 
-app.listen(port, () =>
-  console.log(`Server running at http://localhost:${port}`)
-);
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
