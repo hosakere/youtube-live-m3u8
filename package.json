@@ -1,15 +1,13 @@
 {
   "name": "youtube-live-m3u8",
   "version": "1.0.0",
-  "description": "",
+  "description": "YouTube live to IPTV .m3u8 redirect server",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
+    "express": "^4.18.2",
     "yt-dlp-wrap": "^2.3.12"
   }
 }
