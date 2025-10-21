@@ -1,9 +1,0 @@
-{
-  "version": 2,
-  "builds": [
-    { "src": "api/live.js", "use": "@vercel/node" }
-  ],
-  "routes": [
-    { "src": "/live.m3u8", "dest": "/api/live.js" }
-  ]
-}
