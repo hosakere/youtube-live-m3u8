@@ -1,39 +1,51 @@
 import express from "express";
-import YTDlpWrap from "yt-dlp-wrap";
+import { YtDlpWrap } from "yt-dlp-wrap";
+import fetch from "node-fetch";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
-const ytDlp = new YTDlpWrap();
+// create yt-dlp instance
+const ytDlp = new YtDlpWrap();
 
-let cache = { url: "", video: "", fetchedAt: 0, expiresIn: 0 };
-
+// Route for m3u8
 app.get("/live.m3u8", async (req, res) => {
-  const videoUrl = req.query.url;
-  if (!videoUrl) return res.status(400).send("❌ Missing 'url' query parameter");
-
-  const now = Date.now();
-  if (
-    cache.url &&
-    cache.video === videoUrl &&
-    now - cache.fetchedAt < cache.expiresIn
-  ) {
-    console.log("✅ Using cached URL");
-    return res.redirect(cache.url);
+  const youtubeUrl = req.query.url;
+  if (!youtubeUrl) {
+    return res.status(400).send("Missing YouTube URL");
   }
 
   try {
-    console.log("🎥 Fetching stream for:", videoUrl);
-    const output = await ytDlp.execPromise(["-g", "-f", "best", videoUrl]);
-    const hlsUrl = output.trim();
-
-    // Cache for 45 seconds
-    cache = { url: hlsUrl, video: videoUrl, fetchedAt: now, expiresIn: 45000 };
-    res.redirect(hlsUrl);
+    const streamUrl = await ytDlp.execPromise([
+      "-g",
+      "-f",
+      "best",
+      youtubeUrl,
+    ]);
+    res.redirect(streamUrl.trim());
   } catch (err) {
-    console.error("❌ Error fetching stream:", err);
-    res.status(500).send("Error fetching live stream");
+    res.status(500).send("Error fetching stream: " + err.message);
   }
 });
 
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// Root route
+app.get("/", (req, res) => {
+  res.send("✅ YouTube M3U8 server is running!");
+});
+
+// Auto-refresh job
+const YT_TEST_URL = "https://www.youtube.com/live/jdJoOhqCipA";
+setInterval(async () => {
+  try {
+    const ping = await fetch(
+      `https://youtube-live-m3u8.onrender.com/live.m3u8?url=${YT_TEST_URL}`
+    );
+    console.log("Pinged stream:", ping.status);
+  } catch (e) {
+    console.error("Ping failed:", e.message);
+  }
+}, 10 * 60 * 1000);
+
+app.listen(port, () =>
+  console.log(`Server running at http://localhost:${port}`)
+);
